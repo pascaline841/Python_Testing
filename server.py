@@ -23,7 +23,7 @@ places_max = 12
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', clubs=clubs)
 
 def future_or_old_competitions(competitions):
     """Sort the old and future competitons."""

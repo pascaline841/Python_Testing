@@ -36,6 +36,21 @@
         </li>
         <hr />
         {% endfor %}
+        <table>
+        <thead>
+            <tr>
+                <th>Points available per club</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for club in clubs %}
+            <tr>
+                <td>{{club['name']}}</td>
+                <td>{{club['points']}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {%endwith%}
 
 </body>
