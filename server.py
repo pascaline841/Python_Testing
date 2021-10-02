@@ -20,6 +20,8 @@ app.secret_key = "something_special"
 competitions = loadCompetitions()
 clubs = loadClubs()
 places_max = 12
+ratio = 3
+
 
 @app.route('/')
 def index():
@@ -106,14 +108,13 @@ def available_places(competition, placesRequired):
         competition["numberOfPlaces"] = (
             int(competition["numberOfPlaces"]) - placesRequired
         )
-
-
+        
 def enough_points(club, placesRequired):
     """Check if the club is trying to buy more points than available."""
-    if int(club["points"]) < placesRequired :
+    if int(club["points"]) < (placesRequired*ratio) :
         raise ValueError("More places requested than available points !")
     else:
-        club["points"] = int(club["points"]) - placesRequired 
+        club["points"] = int(club["points"]) - (placesRequired*ratio) 
 
 def not_negatif_point(placesRequired):
     """Check if places required haven't zero or negative value."""
@@ -131,8 +132,8 @@ def purchasePlaces():
     try:
         not_negatif_point(placesRequired)
         not_more_twelve_places(placesRequired)
-        enough_points(club, placesRequired)
         available_places(competition, placesRequired)
+        enough_points(club, placesRequired)       
         flash("Great - booking complete!")
         status_code = 200
     except ValueError as error:
