@@ -1,6 +1,12 @@
 click==7.1.2
-Flask==1.1.2
-itsdangerous==1.1.0
-Jinja2==2.11.2
-MarkupSafe==1.1.1
-Werkzeug==1.0.1
+coverage==5.5
+Flask==2.0.0
+itsdangerous==2.0
+Jinja2==3.0
+locust==2.2.3
+MarkupSafe==2.0.0rc2
+pytest==6.2.5
+pytest-cov==2.12.1
+pytest-html==3.1.1
+python-dotenv==0.19.0
+Werkzeug==2.0.0
