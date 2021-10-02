@@ -29,7 +29,13 @@
         </li>
         <hr />
         {% endfor %}
-    </ul>
+        {% for comp in old_competitions%}
+        <li>
+            {{comp['name']}}<br>
+            Date: {{comp['date']}}<br>
+        </li>
+        <hr />
+        {% endfor %}
     {%endwith%}
 
 </body>

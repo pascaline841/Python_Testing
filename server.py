@@ -1,4 +1,6 @@
+import datetime
 import json
+
 from flask import Flask,render_template,request,redirect,flash,url_for
 
 
@@ -22,26 +24,71 @@ clubs = loadClubs()
 def index():
     return render_template('index.html')
 
+def future_or_old_competitions(competitions):
+    """Sort the old and future competitons."""
+    old_competitions = [
+        c
+        for c in competitions
+        if datetime.datetime.strptime(c["date"], "%Y-%m-%d %H:%M:%S")
+        < datetime.datetime.now()
+    ]
+    future_competitions = [
+        c
+        for c in competitions
+        if datetime.datetime.strptime(c["date"], "%Y-%m-%d %H:%M:%S")
+        >= datetime.datetime.now()
+    ]
+    return old_competitions, future_competitions
+
+
 @app.route("/showSummary", methods=["POST"])
 def showSummary():
     try:
         club = [club for club in clubs if club["email"] == request.form["email"]][0]
-        return render_template('welcome.html',club=club,competitions=competitions)
+        old_competitions, future_competitions = future_or_old_competitions(competitions)
+        return render_template(
+            "welcome.html",
+            club=club,
+            competitions=future_competitions,
+            old_competitions=old_competitions,
+            clubs=clubs,
+        )
     except IndexError:
         flash("Sorry, that email wasn't found !")
         return render_template("index.html", clubs=clubs), 403
-    
 
 
-@app.route('/book/<competition>/<club>')
-def book(competition,club):
-    foundClub = [c for c in clubs if c['name'] == club][0]
-    foundCompetition = [c for c in competitions if c['name'] == competition][0]
-    if foundClub and foundCompetition:
-        return render_template('booking.html',club=foundClub,competition=foundCompetition)
-    else:
-        flash("Something went wrong-please try again")
-        return render_template('welcome.html', club=club, competitions=competitions)
+def is_competition_expired(competition):
+    """Check if the competition has expired."""
+    if (
+        datetime.datetime.strptime(competition["date"], "%Y-%m-%d %H:%M:%S")
+        < datetime.datetime.now()
+    ):
+        raise ValueError("The booking has expired !")
+
+
+@app.route("/book/<competition>/<club>")
+def book(competition, club):
+    club = [c for c in clubs if c["name"] == club][0]
+    competition = [c for c in competitions if c["name"] == competition][0]
+    try:
+        is_competition_expired(competition)
+    except ValueError as error:
+        flash(error)
+        status_code = 403
+        old_competitions, future_competitions = future_or_old_competitions(competitions)
+        return (
+            render_template(
+                "welcome.html",
+                club=club,
+                competitions=future_competitions,
+                old_competitions=old_competitions,
+                clubs=clubs,
+            ),
+            status_code,
+        )
+    return render_template("booking.html", club=club, competition=competition)
+
 
 
 @app.route('/purchasePlaces',methods=['POST'])
