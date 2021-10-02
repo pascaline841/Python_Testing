@@ -19,6 +19,7 @@ app.secret_key = "something_special"
 
 competitions = loadCompetitions()
 clubs = loadClubs()
+places_max = 12
 
 @app.route('/')
 def index():
@@ -91,18 +92,63 @@ def book(competition, club):
 
 
 
-@app.route('/purchasePlaces',methods=['POST'])
+def not_more_twelve_places(placesRequired):
+    """Check the club is trying to buy more than places_max."""
+    if placesRequired > places_max:
+        raise ValueError("More places than authorized to book by club !")
+
+
+def available_places(competition, placesRequired):
+    """Check if the club is trying to buy more places than available."""
+    if int(competition["numberOfPlaces"]) < placesRequired:
+        raise ValueError("More places requested than available !")
+    else:
+        competition["numberOfPlaces"] = (
+            int(competition["numberOfPlaces"]) - placesRequired
+        )
+
+
+def enough_points(club, placesRequired):
+    """Check if the club is trying to buy more points than available."""
+    if int(club["points"]) < placesRequired :
+        raise ValueError("More places requested than available points !")
+    else:
+        club["points"] = int(club["points"]) - placesRequired 
+
+def not_negatif_point(placesRequired):
+    """Check if places required haven't zero or negative value."""
+    if placesRequired <= 0:
+        raise ValueError("This is not a positive value !")
+
+
+@app.route("/purchasePlaces", methods=["POST"])
 def purchasePlaces():
-    competition = [c for c in competitions if c['name'] == request.form['competition']][0]
-    club = [c for c in clubs if c['name'] == request.form['club']][0]
-    placesRequired = int(request.form['places'])
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesRequired
-    flash('Great-booking complete!')
-    return render_template('welcome.html', club=club, competitions=competitions)
-
-
-# TODO: Add route for points display
-
+    competition = [c for c in competitions if c["name"] == request.form["competition"]][
+        0
+    ]
+    club = [c for c in clubs if c["name"] == request.form["club"]][0]
+    placesRequired = int(request.form["places"])
+    try:
+        not_negatif_point(placesRequired)
+        not_more_twelve_places(placesRequired)
+        enough_points(club, placesRequired)
+        available_places(competition, placesRequired)
+        flash("Great - booking complete!")
+        status_code = 200
+    except ValueError as error:
+        flash(error)
+        status_code = 403
+    old_competitions, future_competitions = future_or_old_competitions(competitions)
+    return (
+        render_template(
+            "welcome.html",
+            club=club,
+            competitions=future_competitions,
+            old_competitions=old_competitions,
+            clubs=clubs,
+        ),
+        status_code,
+    )
 
 @app.route('/logout')
 def logout():
